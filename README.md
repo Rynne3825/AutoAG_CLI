@@ -1,6 +1,13 @@
-# 🚀 Auto-Submit CLI for Antigravity (Windows)
+<p align="center">
+  <img src="logo.svg" alt="AutoAG Logo" width="180" height="180" />
+</p>
 
-[Tiếng Việt](#vietnamese-vietnamese-version) | [English](#english-english-version)
+<h1 align="center">🚀 Auto-Submit CLI for Antigravity</h1>
+
+<p align="center">
+  <a href="#vietnamese-vietnamese-version">Tiếng Việt</a> • 
+  <a href="#english-english-version">English</a>
+</p>
 
 ---
 
