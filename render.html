@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 800px;
+      height: 800px;
+      background: transparent;
+      overflow: hidden;
+    }
+    svg {
+      width: 800px;
+      height: 800px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+    <!-- Definitions for gradients, shadows, and glowing effects -->
+    <defs>
+      <!-- Background Gradient: Deep Obsidian Dark Mode -->
+      <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+        <stop offset="0%" stop-color="#141923" />
+        <stop offset="60%" stop-color="#0a0c10" />
+        <stop offset="100%" stop-color="#030406" />
+      </radialGradient>
+
+      <!-- Glowing Blue/Cyan Gradient for Outer Orbital Ring -->
+      <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#00f2fe" />
+        <stop offset="50%" stop-color="#4facfe" />
+        <stop offset="100%" stop-color="#0066ff" />
+      </linearGradient>
+
+      <!-- Glowing Purple/Magenta Gradient for Inner Accent Ring -->
+      <linearGradient id="purpleGlow" x1="100%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#f857a6" />
+        <stop offset="50%" stop-color="#ff5858" />
+        <stop offset="100%" stop-color="#a18cd1" />
+      </linearGradient>
+
+      <!-- Metallic/Glassy White/Cyan Gradient for Letter 'A' -->
+      <linearGradient id="letterAGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+        <stop offset="40%" stop-color="#e0f7fa" stop-opacity="0.9" />
+        <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.6" />
+      </linearGradient>
+
+      <!-- Strong Neon Glow Filter -->
+      <filter id="neonGlowEffect" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="22" result="blur1" />
+        <feGaussianBlur stdDeviation="10" result="blur2" />
+        <feMerge>
+          <feMergeNode in="blur1" />
+          <feMergeNode in="blur2" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+
+      <!-- Soft Ambient Glow Filter for Orb -->
+      <filter id="ambientGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="35" result="blur" />
+      </filter>
+
+      <!-- Glassmorphic Drop Shadow -->
+      <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="15" stdDeviation="15" flood-color="#000000" flood-opacity="0.6"/>
+      </filter>
+    </defs>
+
+    <!-- 1. Obsidian Background -->
+    <rect width="800" height="800" rx="160" fill="url(#bgGrad)" />
+
+    <!-- Subtle grid pattern in the background for tech aesthetic -->
+    <g opacity="0.04" stroke="#ffffff" stroke-width="1">
+      <path d="M 0,100 L 800,100 M 0,200 L 800,200 M 0,300 L 800,300 M 0,400 L 800,400 M 0,500 L 800,500 M 0,600 L 800,600 M 0,700 L 800,700" />
+      <path d="M 100,0 L 100,800 M 200,0 L 200,800 M 300,0 L 300,800 M 400,0 L 400,800 M 500,0 L 500,800 M 600,0 L 600,800 M 700,0 L 700,800" />
+    </g>
+
+    <!-- 2. Soft Ambient Background Glow (Glow behind the sphere) -->
+    <circle cx="400" cy="400" r="180" fill="url(#cyanGlow)" opacity="0.15" filter="url(#ambientGlow)" />
+    <circle cx="400" cy="400" r="140" fill="url(#purpleGlow)" opacity="0.15" filter="url(#ambientGlow)" />
+
+    <!-- 3. Dynamic Outer Orbital Rings (Lightning Automation) -->
+    <g filter="url(#dropShadow)">
+      <!-- Outer Cyan Ring - Defying Gravity Orbit -->
+      <ellipse cx="400" cy="400" rx="260" ry="110" fill="none" stroke="url(#cyanGlow)" stroke-width="8" transform="rotate(-30, 400, 400)" stroke-dasharray="1200" stroke-dashoffset="0" opacity="0.85" filter="url(#neonGlowEffect)" />
+      
+      <!-- Outer Magenta Ring - Perpendicular Orbit -->
+      <ellipse cx="400" cy="400" rx="240" ry="90" fill="none" stroke="url(#purpleGlow)" stroke-width="5" transform="rotate(45, 400, 400)" stroke-dasharray="800 200" opacity="0.75" filter="url(#neonGlowEffect)" />
+    </g>
+
+    <!-- 4. Central Gravity-Defying Quantum Sphere -->
+    <g filter="url(#dropShadow)">
+      <!-- Inner Core Sphere -->
+      <circle cx="400" cy="400" r="160" fill="#0d1117" stroke="url(#cyanGlow)" stroke-width="3" opacity="0.9" />
+      
+      <!-- Glowing Inner Rim -->
+      <circle cx="400" cy="400" r="158" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.25" />
+      
+      <!-- Spherical Glass Highlight Gradient -->
+      <circle cx="400" cy="400" r="160" fill="none" stroke="url(#cyanGlow)" stroke-width="2" opacity="0.4" />
+    </g>
+
+    <!-- 5. Stylized Futuristic Letter 'A' (Antigravity & AutoAG) -->
+    <g filter="url(#dropShadow)" transform="translate(400, 400)">
+      <!-- Left Leg of A -->
+      <path d="M -70,95 L -20,-75 C -15,-92 15,-92 20,-75 L 70,95 C 75,110 50,110 42,95 L 30,50 L -30,50 L -42,95 C -50,110 -75,110 -70,95 Z" 
+            fill="url(#letterAGrad)" />
+      
+      <!-- Outer Neon Cyan Accent Stroke for 3D depth -->
+      <path d="M -70,95 L -20,-75 C -15,-92 15,-92 20,-75 L 70,95" 
+            fill="none" stroke="url(#cyanGlow)" stroke-width="3" opacity="0.8" filter="url(#neonGlowEffect)" />
+      
+      <!-- Floating horizontal crossbar - represents gravity defiance -->
+      <rect x="-35" y="10" width="70" height="14" rx="7" fill="url(#cyanGlow)" opacity="0.9" filter="url(#neonGlowEffect)" />
+      
+      <!-- Inner A Cutout triangle for modern branding -->
+      <path d="M 0,-40 L 18,18 L -18,18 Z" fill="#0d1117" opacity="0.9" />
+    </g>
+
+    <!-- 6. Floating Sparks / Automation Nodes (representing AI agents at work) -->
+    <g opacity="0.9" filter="url(#neonGlowEffect)">
+      <!-- Glowing Node 1 -->
+      <circle cx="210" cy="290" r="8" fill="#00f2fe" />
+      <!-- Glowing Node 2 -->
+      <circle cx="590" cy="510" r="8" fill="#f857a6" />
+      <!-- Glowing Node 3 -->
+      <circle cx="340" cy="180" r="5" fill="#00f2fe" />
+      <!-- Glowing Node 4 -->
+      <circle cx="480" cy="620" r="5" fill="#f857a6" />
+    </g>
+
+    <!-- Elegant glowing energy dot in the center of A -->
+    <circle cx="400" cy="385" r="7" fill="#ffffff" filter="url(#neonGlowEffect)" />
+  </svg>
+</body>
+</html>
