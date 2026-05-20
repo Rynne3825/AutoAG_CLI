@@ -96,30 +96,34 @@ if (!(Test-Path $preloadFile)) {
 }
 
 $preloadContent = Get-Content $preloadFile -Raw
-if ($preloadContent -match "Auto-submit Command Execution Requests") {
-    Write-Host "Antigravity da duoc va tu truoc!" -ForegroundColor Green
-} else {
-    Write-Host "Dang tiem ma tu dong phe duyet lenh..." -ForegroundColor Yellow
-    
-    # Read the patch JavaScript file from the same directory as this script
-    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    if ([string]::IsNullOrEmpty($scriptDir)) {
-        $scriptDir = $PSScriptRoot
-    }
-    if ([string]::IsNullOrEmpty($scriptDir)) {
-        $scriptDir = "."
-    }
-    $patchFile = Join-Path $scriptDir "preload_patch.js"
-    if (!(Test-Path $patchFile)) {
-        Write-Error "Khong tim thay tep preload_patch.js tai $patchFile! Vui long dam bao tep nay nam cung thu muc voi script cai dat."
-        Exit 1
-    }
-    
-    $injectionCode = Get-Content $patchFile -Raw
-    $newPreloadContent = $preloadContent + "`r`n" + $injectionCode
-    Set-Content -Path $preloadFile -Value $newPreloadContent
-    Write-Host "Da tiem ma thanh cong!" -ForegroundColor Green
+$patchMarker = "// Auto-submit Command Execution Requests"
+$markerIndex = $preloadContent.IndexOf($patchMarker)
+
+if ($markerIndex -ge 0) {
+    Write-Host "Phat hien ban va cu. Dang lam sach va nang cap..." -ForegroundColor Yellow
+    $preloadContent = $preloadContent.Substring(0, $markerIndex).Trim()
 }
+
+Write-Host "Dang tiem ma tu dong phe duyet lenh..." -ForegroundColor Yellow
+
+# Read the patch JavaScript file from the same directory as this script
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+if ([string]::IsNullOrEmpty($scriptDir)) {
+    $scriptDir = $PSScriptRoot
+}
+if ([string]::IsNullOrEmpty($scriptDir)) {
+    $scriptDir = "."
+}
+$patchFile = Join-Path $scriptDir "..\src\patch\preload_patch.js"
+if (!(Test-Path $patchFile)) {
+    Write-Error "Khong tim thay tep preload_patch.js tai $patchFile! Vui long dam bao tep nay nam cung thu muc voi script cai dat."
+    Exit 1
+}
+
+$injectionCode = Get-Content $patchFile -Raw
+$newPreloadContent = $preloadContent + "`r`n`r`n" + $injectionCode
+Set-Content -Path $preloadFile -Value $newPreloadContent
+Write-Host "Da tiem ma va nang cap thanh cong!" -ForegroundColor Green
 
 # 6.5 Inject sandbox: false into dist/utils.js to enable full Node.js APIs in preload
 $utilsFile = Join-Path $tempDir "dist\utils.js"

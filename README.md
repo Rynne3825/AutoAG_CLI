@@ -1,93 +1,96 @@
 <p align="center">
-  <img src="logo.svg" alt="AutoAG Logo" width="180" height="180" />
+  <img src="assets/LogoAG.png" alt="AutoAG Logo" width="120" style="border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);" />
 </p>
 
-<h1 align="center">🚀 Auto-Submit CLI for Antigravity</h1>
+<h1 align="center">⚡ AutoAG CLI ⚡</h1>
 
 <p align="center">
-  <a href="#vietnamese-vietnamese-version">Tiếng Việt</a> • 
-  <a href="#english-english-version">English</a>
+  <strong>Trình Duyệt Quyền Tự Động Siêu Tốc Cho Antigravity IDE</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Windows-blue?style=for-the-badge&logo=windows" alt="Platform Windows" />
+  <img src="https://img.shields.io/badge/Speed-%3C1ms-brightgreen?style=for-the-badge" alt="Speed" />
+  <img src="https://img.shields.io/badge/Status-Stable-success?style=for-the-badge" alt="Status" />
 </p>
 
 ---
 
-## 🇻🇳 Vietnamese (Vietnamese Version)
+## 🌟 Năng Lực Cốt Lõi (Core Features)
 
-**Auto-Submit CLI** là một bộ công cụ siêu nhẹ, di động (portable) và tự động hóa hoàn toàn giúp tối ưu hóa luồng làm việc của bạn trong IDE Antigravity. Công cụ này tự động hóa việc phê duyệt các yêu cầu thực thi lệnh hệ thống (Command Execution) từ AI Agent, giải phóng bạn khỏi việc phải click chuột thủ công vào nút "Submit" mỗi khi agent muốn chạy lệnh.
-
-Dự án đi kèm với một ứng dụng Khay hệ thống (System Tray) viết bằng C# cho phép bạn bật/tắt tính năng tự động phê duyệt chỉ với 1 cú click.
-
----
-
-### 🌟 Tính năng nổi bật & Sự tối ưu vượt trội
-1. **Tự động hóa hoàn toàn (Zero-Friction Installation)**: Chỉ cần chạy ứng dụng Tray lần đầu, nó sẽ tự động vá ngầm (patch) Antigravity và khởi động lại IDE. Không cần người dùng mở PowerShell hay gõ lệnh thủ công.
-2. **Khắc phục triệt để Electron Sandbox**: Bản vá tự động vô hiệu hóa chế độ Sandbox của Electron cho preload script (`sandbox: false` in `utils.js`), mở khóa toàn bộ sức mạnh Node.js (`fs`, `path`, `os`) cho đoạn script vá lỗi chạy chính xác 100%.
-3. **Bộ lắng nghe SPA thông minh (IIFE & MutationObserver)**: Bản vá sử dụng hàm tự chạy (IIFE) kết hợp với `MutationObserver` gắn thẳng vào thẻ gốc `<html>` (`document.documentElement`). Bất kể bạn đổi Session chat, đổi Project hay tạo hội thoại mới, tính năng tự động duyệt lệnh luôn phản hồi lập tức trong vài mili-giây.
-4. **An toàn & Minh bạch 100%**:
-   - **Không yêu cầu quyền Admin**: Việc đăng ký khởi động cùng Windows sử dụng Registry cục bộ (`HKCU:\Software\Microsoft\Windows\CurrentVersion\Run`), hoàn toàn không đòi hỏi quyền Admin cao nhất.
-   - **Khóa đơn tiến trình (Mutex Single-Instance)**: Ứng dụng khay hệ thống sử dụng Mutex toàn cục, ngăn chặn triệt để việc mở nhiều cửa sổ/icon trùng lặp làm tốn tài nguyên máy tính.
-   - **Chống rò rỉ bộ nhớ (GDI+ Memory Protection)**: Quá trình vẽ Icon động (Xanh khi bật, Xám khi tắt) được quản lý chặt chẽ bằng cách giải phóng (Dispose) các GDI+ handle ngay lập tức sau khi vẽ.
-5. **Gỡ cài đặt sạch sẽ (Zero-Residual)**: Trình gỡ cài đặt khôi phục lại 100% tệp gốc `app.asar`, xóa sạch Registry khởi động và tệp cấu hình trung gian. Không để lại bất kỳ tập tin rác nào trên hệ thống của bạn.
+| Tính Năng | Giải Pháp Cũ (DOM Rotator) | Giải Pháp Mới (AutoAG gRPC-Web) |
+| :--- | :---: | :---: |
+| **Tốc độ phản hồi** | 🐢 5 ~ 10 giây (Trễ & Xoay vòng tab) | ⚡ **< 1 mili-giây** (Tức thời!) |
+| **Mức độ ảnh hưởng UI** | ⚠️ Nhấp nháy màn hình, chuyển tab liên tục | 🍃 **100% Ẩn danh**, không đổi tab, không ảnh hưởng UI |
+| **Hoạt động ngầm** | ❌ Dừng hoạt động khi thu nhỏ hoặc mất tập trung |  **Hoạt động ngầm liên tục** ngay cả khi thu nhỏ |
+| **Độ tin cậy** | 🔄 Dễ lỗi nếu giao diện DOM thay đổi cấu trúc | 🛡️ **Kép (Dual-Layer)**: Giao thức mạng + Giao diện dự phòng |
 
 ---
 
-### 📂 Cấu trúc dự án
-Dự án được tối ưu tối giản theo triết lý "No Bloatware" chỉ với các tệp tin cốt lõi:
-* 🖥 **`Program.cs`**: Mã nguồn C# điều khiển ứng dụng Khay hệ thống, vẽ icon động, quản lý Registry và cấu hình.
-* 🛠 **`patcher.ps1`**: Kịch bản PowerShell thực hiện vá nhân Antigravity, vô hiệu hóa Sandbox Electron và tích hợp preload script.
-* 🧹 **`uninstaller.ps1`**: Kịch bản PowerShell khôi phục Antigravity về trạng thái gốc, dọn dẹp hệ thống.
-* 📜 **`preload_patch.js`**: Đoạn mã JavaScript vá lỗi tiêm ngầm vào Antigravity để lắng nghe và bấm duyệt nút "Submit".
-* ⚙️ **`compile.bat`**: Nhấp đúp để tự động biên dịch lại `Program.cs` thành tệp thực thi `AutoAG_Tray.exe` siêu nhanh mà không cần cài đặt phần mềm nặng nề.
-* 🚀 **`install_patch.bat` & `uninstall_patch.bat`**: Các phím tắt nhanh để chạy trình vá lỗi/gỡ lỗi bằng một click.
-* 📦 **`AutoAG_Tray.exe`**: Ứng dụng khay hệ thống đã được biên dịch sẵn.
+## 🗺️ Luồng Kiến Trúc (System Architecture)
+
+```mermaid
+graph TD
+    A[Antigravity IDE FrontEnd] -->|1. Request Permission| B(Language Server backend)
+    B -->|2. Stream Updates /StreamAgentStateUpdates| A
+    
+    subgraph AutoAG CLI Engine
+        C[Global fetch/XMLHttpRequest Hooks] <-->|3. Intercept gRPC-Web Stream| A
+        D[Direct Network Approver Engine] <-->|4. Dispatch Approval JSON| C
+    end
+    
+    D -->|5. Instant Approve /HandleCascadeUserInteraction| B
+    style AutoAG CLI Engine fill:#1a1a2e,stroke:#3a3a5e,stroke-width:2px,color:#ffffff
+    style D fill:#00ADB5,stroke:#00f2fe,stroke-width:2px,color:#ffffff
+```
 
 ---
 
-### 🚀 Hướng dẫn sử dụng
-#### Bước 1: Khởi động hệ thống
-Bạn chỉ cần click đúp vào **`AutoAG_Tray.exe`**:
-* Ứng dụng sẽ tự động xuất hiện ở Khay hệ thống (System Tray) của Windows với biểu tượng hình tròn màu xanh ngọc lục bảo chữ **A**.
-* Ứng dụng sẽ tự động thực hiện vá lỗi ngầm cho Antigravity (nếu chưa vá) và khởi động lại Antigravity trong tích tắc.
+## 📂 Tổ Chức Thư Mục (Repository Structure)
 
-#### Bước 2: Bật/Tắt dễ dàng
-* **Nhấp đúp vào biểu tượng Khay hệ thống** hoặc **Nhấp chuột phải -> Auto-Submit Enabled** để bật/tắt nhanh chế độ tự động duyệt.
-  - 🟢 **Màu xanh ngọc**: Auto-Submit đang **Bật** (Các lệnh sẽ được phê duyệt tự động ngay lập tức).
-  - 🔴 **Màu xám**: Auto-Submit đang **Tắt** (Mọi lệnh yêu cầu duyệt sẽ hiển thị hộp thoại chờ bạn bấm duyệt thủ công).
-* **Khởi động cùng Windows**: Chọn **Run on Windows Startup** trong Menu chuột phải để công cụ tự khởi động mỗi khi bạn mở máy tính.
-
----
-
-## 🇺🇸 English (English Version)
-
-**Auto-Submit CLI** is an ultra-lightweight, 100% portable, and zero-friction automation utility designed to supercharge your workflow within the Antigravity IDE on Windows. It automates the tedious command-run approval flow from AI Agents, instantly clicking the "Submit" button whenever a command execution request arises.
-
-The project features a C# System Tray background application that allows you to easily toggle the auto-submit feature on or off with a single click.
+```text
+AutoAG_CLI/
+├── assets/                  # Tài nguyên hình ảnh, logo ứng dụng
+├── scripts/                 # Kịch bản cài đặt, gỡ bỏ và biên dịch
+├── src/                     # Mã nguồn dự án
+│   ├── patch/               # Bản vá Đánh chặn mạng (Javascript)
+│   └── tray/                # Ứng dụng C# System Tray (Khay hệ thống)
+├── install.bat              # Lối tắt cài đặt nhanh (Click-and-Go)
+├── uninstall.bat            # Lối tắt gỡ cài đặt nhanh
+└── AutoAG_Tray.exe          # Tệp chạy System Tray khay hệ thống (Windows)
+```
 
 ---
 
-### 🌟 Core Highlights & Architectural Optimizations
-1. **Zero-Friction Silent Installation**: Launching the Tray app automatically applies the patch under-the-hood and restarts the IDE if needed. No manual command-line execution or PowerShell interaction is required from the end user.
-2. **Electron Sandbox Defeat**: The patcher automatically injects `sandbox: false` into the window's `webPreferences` inside `utils.js`. This disables the renderer process sandboxing, opening full Node.js API support (`fs`, `path`, `os`) for our preload script.
-3. **SPA-Ready Smart Observer (IIFE & MutationObserver)**: The script runs instantly as an IIFE, observing mutations on the HTML root element (`document.documentElement`). It works seamlessly across routing navigations, workspace changes, and brand new chat sessions without reloading.
-4. **100% Secure & Transparent**:
-   - **No Administrator Privileges Required**: Writes to the local user Registry hive (`HKCU:\Software\Microsoft\Windows\CurrentVersion\Run`), enabling startup automation without requesting elevation.
-   - **Single Instance Enforcement (Mutex)**: Utilizes a global C# system `Mutex` to prevent duplicate processes from launching and wasting resources.
-   - **Memory Leak Protection (GDI+)**: The dynamic tray icon redrawing pipeline strictly disposes of GDI+ handles (`Icon`, `Graphics`, `Bitmap`) to ensure zero memory leaks over long sessions.
-5. **Zero-Residual Clean Uninstall**: The uninstaller perfectly restores the pristine backup of `app.asar`, removes startup Registry entries, and wipes the settings folder cleanly.
+## ⚡ Hướng Dẫn Nhanh (Quick Start)
+
+### 1. Cài Đặt (Installation)
+
+> [!IMPORTANT]
+> Hãy chắc chắn rằng bạn đã mở Antigravity IDE ít nhất một lần trước khi cài đặt.
+
+Chạy tệp tin phím tắt ngay tại thư mục gốc:
+* Nhấp đúp vào **`install.bat`** để tự động vá lỗi bảo mật và kích hoạt AutoAG.
 
 ---
 
-### ⚙️ Usage Instructions
-#### Step 1: Initial Setup
-Double-click **`AutoAG_Tray.exe`**:
-* The application will run silently in the Windows System Tray with a sharp teal circle icon containing the letter **A**.
-* It immediately patches Antigravity in the background and restarts the IDE automatically.
+### 2. Quản Lý Qua Khay Hệ Thống (System Tray Control)
 
-#### Step 2: Custom Toggles
-* **Double-click the Tray Icon** or **Right-click -> Auto-Submit Enabled** to toggle.
-  - 🟢 **Teal green circle**: Auto-Submit is **ENABLED** (Commands are accepted instantly).
-  - 🔴 **Dark grey circle**: Auto-Submit is **DISABLED** (Consent dialogs will appear and wait for your manual action).
-* **Autostart with Windows**: Check **Run on Windows Startup** inside the right-click menu to have the tray app run automatically when your computer boots up.
+Nhấp đúp vào **`AutoAG_Tray.exe`** để mở biểu tượng quản lý tại góc màn hình Windows:
+
+| Biểu Tượng | Trạng Thái | Mô Tả |
+| :---: | :--- | :--- |
+| <img src="src/tray/Resources/logo.ico" width="20"/> | **Đang kích hoạt (Active)** | AutoAG đang chặn mạng và duyệt quyền tự động trong `<1ms`! |
+| <img src="src/tray/Resources/logo_disabled.ico" width="20"/> | **Tạm dừng (Disabled)** | Tạm dừng phê duyệt tự động. Trả IDE về trạng thái hỏi quyền mặc định. |
 
 ---
-*Developed with 💻 & ☕ for Antigravity Users.*
+
+### 3. Gỡ Cài Đặt (Uninstallation)
+
+Nhấp đúp vào **`uninstall.bat`** tại thư mục gốc để khôi phục Antigravity IDE về trạng thái nguyên bản 100%.
+
+---
+
+<p align="center">
+  Gặp lỗi hoặc cần cải tiến? Hãy mở một Issue hoặc đóng góp Pull Request ngay nhé! ❤️
+</p>

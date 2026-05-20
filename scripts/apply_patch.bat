@@ -1,5 +1,5 @@
 @echo off
-title AutoAG CLI - High Performance Patch Installer (NoKill Mode)
+title AutoAG CLI - High Performance Patch Installer
 echo ===================================================
 echo   AutoAG CLI - High Performance Patch Installer   
 echo ===================================================
@@ -18,7 +18,7 @@ if exist "C:\Users\Rynne\AppData\Local\Programs\Antigravity\resources\app.asar.b
 )
 
 echo Applying the ultra-optimized preloader patch...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ".\scripts\patcher.ps1 -NoKill"
+powershell -NoProfile -ExecutionPolicy Bypass -Command ".\patcher.ps1 -NoKill"
 
 echo Relaunching Antigravity IDE...
 if exist "C:\Users\Rynne\AppData\Local\Programs\Antigravity\Antigravity.exe" (

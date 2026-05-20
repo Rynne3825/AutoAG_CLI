@@ -9,13 +9,24 @@ namespace AutoAG_IconGenerator
     {
         public static void Main()
         {
-            string pngPath = "LogoAG.png";
-            string activeOut = "logo.ico";
-            string disabledOut = "logo_disabled.ico";
+            string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+            string pngPath = Path.Combine(exeDir, @"..\..\assets\LogoAG.png");
+            if (!File.Exists(pngPath)) pngPath = Path.Combine(exeDir, @"..\assets\LogoAG.png"); // Fallback
+            if (!File.Exists(pngPath)) pngPath = Path.Combine(exeDir, "LogoAG.png"); // Fallback 2
+            if (!File.Exists(pngPath)) pngPath = "LogoAG.png"; // Fallback 3
+
+            string resourcesDir = Path.Combine(exeDir, "Resources");
+            if (!Directory.Exists(resourcesDir))
+            {
+                Directory.CreateDirectory(resourcesDir);
+            }
+
+            string activeOut = Path.Combine(resourcesDir, "logo.ico");
+            string disabledOut = Path.Combine(resourcesDir, "logo_disabled.ico");
 
             if (!File.Exists(pngPath))
             {
-                Console.WriteLine("Error: LogoAG.png not found!");
+                Console.WriteLine("Error: LogoAG.png not found at: " + Path.GetFullPath(pngPath));
                 return;
             }
 

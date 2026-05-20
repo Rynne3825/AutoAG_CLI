@@ -1,0 +1,30 @@
+# ==============================================================================
+# AutoAG_CLI - Professional Git Ignore Settings
+# ==============================================================================
+
+# Compiled binaries
+*.exe
+*.pdb
+*.dll
+
+# Electron ASAR Extraction Temporary folders
+antigravity_patch_temp/
+extracted/
+
+# Large payload traces & Logs
+*.har
+*.log
+
+# Personal/Local configurations
+.gemini/
+C:\\Users\\Rynne\\.gemini\\
+autosubmit.json
+
+# Visual Studio / Windows folder caches
+.vs/
+bin/
+obj/
+*.suo
+*.user
+Thumbs.db
+Desktop.ini
