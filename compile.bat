@@ -30,7 +30,7 @@ if exist "%ICO_FILE%" (
     echo 📦 Found logo.ico, compiling with custom file icon!
 )
 
-"%COMPILER%" /target:winexe %ICON_FLAG% /out:"%OUT_EXE%" /r:System.dll,System.Drawing.dll,System.Windows.Forms.dll "%SRC_CS%"
+"%COMPILER%" /target:winexe %ICON_FLAG% /resource:"%~dp0logo.ico",AutoAG_CLI.logo.ico /resource:"%~dp0logo_disabled.ico",AutoAG_CLI.logo_disabled.ico /out:"%OUT_EXE%" /r:System.dll,System.Drawing.dll,System.Windows.Forms.dll "%SRC_CS%"
 
 if %ERRORLEVEL% equ 0 (
     echo.

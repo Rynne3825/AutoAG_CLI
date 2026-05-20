@@ -201,6 +201,25 @@ namespace AutoAG_CLI
             }
         }
 
+        private Icon GetEmbeddedIcon(string resourceName)
+        {
+            try
+            {
+                using (Stream stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
+                {
+                    if (stream != null)
+                    {
+                        return new Icon(stream);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error loading embedded icon: " + ex.Message);
+            }
+            return null;
+        }
+
         private void UpdateIconAndTooltip()
         {
             // Dispose old icon if it exists to avoid memory leak
@@ -209,48 +228,30 @@ namespace AutoAG_CLI
                 notifyIcon.Icon.Dispose();
             }
 
-            // Create a dynamic icon with premium neon gradient style matching the SVG logo
-            using (Bitmap bitmap = new Bitmap(16, 16))
+            // Load the perfect, high-resolution embedded resource icon (built directly from logo.svg!)
+            string resourceName = isEnabled ? "AutoAG_CLI.logo.ico" : "AutoAG_CLI.logo_disabled.ico";
+            Icon icon = GetEmbeddedIcon(resourceName);
+
+            if (icon != null)
             {
-                using (Graphics g = Graphics.FromImage(bitmap))
+                notifyIcon.Icon = icon;
+            }
+            else
+            {
+                // Fallback: simple default draw if resource is missing
+                using (Bitmap bitmap = new Bitmap(16, 16))
                 {
-                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
-                    // Obsidian dark background for the icon circle
-                    using (Brush bgBrush = new SolidBrush(Color.FromArgb(15, 23, 42))) // #0f172a
+                    using (Graphics g = Graphics.FromImage(bitmap))
                     {
-                        g.FillEllipse(bgBrush, 0, 0, 15, 15);
-                    }
-
-                    // Outer orbital glowing ring with premium linear gradient
-                    Color startColor = isEnabled ? Color.FromArgb(0, 242, 254) : Color.FromArgb(117, 117, 117); // Neon Cyan / Grey
-                    Color endColor = isEnabled ? Color.FromArgb(161, 140, 209) : Color.FromArgb(64, 64, 64);   // Purple / Dark Grey
-                    
-                    using (var ringBrush = new System.Drawing.Drawing2D.LinearGradientBrush(
-                        new Rectangle(0, 0, 15, 15), startColor, endColor, 45f))
-                    {
-                        using (Pen ringPen = new Pen(ringBrush, 1.5f))
+                        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                        using (Brush bgBrush = new SolidBrush(Color.FromArgb(15, 23, 42)))
                         {
-                            g.DrawEllipse(ringPen, 0, 0, 15, 15);
+                            g.FillEllipse(bgBrush, 0, 0, 15, 15);
                         }
                     }
-
-                    // Draw stylized high-end letter "A" in the center (ClearType subpixel rendering)
-                    using (Font font = new Font("Segoe UI", 7.5f, FontStyle.Bold))
-                    using (Brush textBrush = new SolidBrush(Color.White))
-                    using (StringFormat sf = new StringFormat())
-                    {
-                        sf.Alignment = StringAlignment.Center;
-                        sf.LineAlignment = StringAlignment.Center;
-                        // Centered perfectly inside the 15x15 boundaries of our circle
-                        g.DrawString("A", font, textBrush, new RectangleF(0.5f, 0.5f, 15f, 15f), sf);
-                    }
+                    IntPtr hIcon = bitmap.GetHicon();
+                    notifyIcon.Icon = Icon.FromHandle(hIcon);
                 }
-
-                // Get Hicon from Bitmap
-                IntPtr hIcon = bitmap.GetHicon();
-                notifyIcon.Icon = Icon.FromHandle(hIcon);
             }
 
             // Update Tooltip
