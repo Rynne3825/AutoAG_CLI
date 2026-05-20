@@ -209,31 +209,39 @@ namespace AutoAG_CLI
                 notifyIcon.Icon.Dispose();
             }
 
-            // Create a dynamic icon
+            // Create a dynamic icon with premium neon gradient style matching the SVG logo
             using (Bitmap bitmap = new Bitmap(16, 16))
             {
                 using (Graphics g = Graphics.FromImage(bitmap))
                 {
-                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
-                    // Background color (Teal green when enabled, dark grey when disabled)
-                    Color bgColor = isEnabled ? Color.FromArgb(0, 150, 136) : Color.FromArgb(117, 117, 117);
-                    using (Brush bgBrush = new SolidBrush(bgColor))
+                    // Obsidian dark background for the icon circle
+                    using (Brush bgBrush = new SolidBrush(Color.FromArgb(15, 23, 42))) // #0f172a
                     {
                         g.FillEllipse(bgBrush, 0, 0, 15, 15);
                     }
 
-                    // Border color
-                    using (Pen borderPen = new Pen(Color.White, 1))
+                    // Outer orbital glowing ring with premium linear gradient
+                    Color startColor = isEnabled ? Color.FromArgb(0, 242, 254) : Color.FromArgb(117, 117, 117); // Neon Cyan / Grey
+                    Color endColor = isEnabled ? Color.FromArgb(161, 140, 209) : Color.FromArgb(64, 64, 64);   // Purple / Dark Grey
+                    
+                    using (var ringBrush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                        new Rectangle(0, 0, 15, 15), startColor, endColor, 45f))
                     {
-                        g.DrawEllipse(borderPen, 0, 0, 15, 15);
+                        using (Pen ringPen = new Pen(ringBrush, 1.5f))
+                        {
+                            g.DrawEllipse(ringPen, 0, 0, 15, 15);
+                        }
                     }
 
-                    // Draw letter "A" inside the circle
-                    using (Font font = new Font("Arial", 8, FontStyle.Bold))
+                    // Draw stylized high-end letter "A" in the center (ClearType subpixel rendering)
+                    using (Font font = new Font("Segoe UI", 8f, FontStyle.Bold))
                     using (Brush textBrush = new SolidBrush(Color.White))
                     {
-                        g.DrawString("A", font, textBrush, 3, 1);
+                        // Center the letter A perfectly
+                        g.DrawString("A", font, textBrush, 1.5f, 0.5f);
                     }
                 }
 
@@ -243,7 +251,7 @@ namespace AutoAG_CLI
             }
 
             // Update Tooltip
-            notifyIcon.Text = string.Format("AutoAG CLI: Auto-Submit is {0}", isEnabled ? "ENABLED" : "DISABLED");
+            notifyIcon.Text = string.Format("AutoAG: Auto-Submit is {0}", isEnabled ? "ENABLED" : "DISABLED");
         }
 
         private void Exit(object sender, EventArgs e)
