@@ -36,6 +36,8 @@
             }
 
             const bodyText = document.body ? (document.body.innerText || '') : '';
+
+            // 1. Check for Permission Approval Dialogs (Command Execution / Filesystem Access)
             if (bodyText.includes('Allow running this command?') || 
                 bodyText.includes('Allow read access to this path?') || 
                 bodyText.includes('Allow write access to this path?') ||
@@ -59,8 +61,21 @@
                         firstOption.click();
                     }
                     
-                    console.log('[Auto-Submit] Automatically accepting command run request.');
+                    console.log('[Auto-Submit] Automatically accepting permission request.');
                     submitButton.click();
+                }
+            }
+
+            // 2. Check for Agent Error and Auto-Retry
+            if (bodyText.includes('Agent terminated due to error')) {
+                const allElements = Array.from(document.querySelectorAll('button, [role="button"], div, span, a'));
+                const retryButton = allElements.find(el => {
+                    const text = (el.textContent || '').trim();
+                    return text === 'Retry' || (el.tagName === 'BUTTON' && text.includes('Retry'));
+                });
+                if (retryButton) {
+                    console.log('[Auto-Submit] Automatically retrying terminated agent.');
+                    retryButton.click();
                 }
             }
         }
