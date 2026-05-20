@@ -43,7 +43,11 @@
                 bodyText.includes('Allow write access to this path?') ||
                 bodyText.includes('Allow read/write access to this path?') ||
                 bodyText.includes('Allow filesystem access?') ||
-                bodyText.includes('access to this path?')) {
+                bodyText.includes('access to this path?') ||
+                bodyText.includes('Allow reading this URL?') ||
+                bodyText.includes('Allow executing this URL?') ||
+                bodyText.includes('reading this URL?') ||
+                bodyText.includes('executing this URL?')) {
                 // Find all potential button elements robustly
                 const allElements = Array.from(document.querySelectorAll('button, [role="button"], div, span, a'));
                 
