@@ -34,7 +34,7 @@ namespace AutoAG_CLI
 
     public class TrayApplicationContext : ApplicationContext
     {
-        private const string CurrentVersion = "v1.1.0";
+        private const string CurrentVersion = "v1.2.0";
 
         private NotifyIcon notifyIcon;
         private ContextMenu contextMenu;
