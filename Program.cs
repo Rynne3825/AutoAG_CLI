@@ -237,11 +237,14 @@ namespace AutoAG_CLI
                     }
 
                     // Draw stylized high-end letter "A" in the center (ClearType subpixel rendering)
-                    using (Font font = new Font("Segoe UI", 8f, FontStyle.Bold))
+                    using (Font font = new Font("Segoe UI", 7.5f, FontStyle.Bold))
                     using (Brush textBrush = new SolidBrush(Color.White))
+                    using (StringFormat sf = new StringFormat())
                     {
-                        // Center the letter A perfectly
-                        g.DrawString("A", font, textBrush, 1.5f, 0.5f);
+                        sf.Alignment = StringAlignment.Center;
+                        sf.LineAlignment = StringAlignment.Center;
+                        // Centered perfectly inside the 15x15 boundaries of our circle
+                        g.DrawString("A", font, textBrush, new RectangleF(0.5f, 0.5f, 15f, 15f), sf);
                     }
                 }
 
