@@ -1,11 +1,16 @@
 <p align="center">
+  <a href="README.md"><b>🇺🇸 English Version</b></a> | 
+  <a href="README.vi.md"><b>🇻🇳 Tiếng Việt</b></a>
+</p>
+
+<p align="center">
   <img src="assets/LogoAG.png" alt="AutoAG Logo" width="120" style="border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);" />
 </p>
 
 <h1 align="center">⚡ AutoAG CLI ⚡</h1>
 
 <p align="center">
-  <strong>Trình Duyệt Quyền Tự Động Siêu Tốc Cho Antigravity IDE</strong>
+  <strong>Ultra-Fast Background Permission Auto-Approver for Antigravity IDE</strong>
 </p>
 
 <p align="center">
@@ -16,18 +21,18 @@
 
 ---
 
-## 🌟 Năng Lực Cốt Lõi (Core Features)
+## 🌟 Core Features
 
-| Tính Năng | Giải Pháp Cũ (DOM Rotator) | Giải Pháp Mới (AutoAG gRPC-Web) |
+| Feature | Legacy Solution (DOM Rotator) | New Solution (AutoAG gRPC-Web) |
 | :--- | :---: | :---: |
-| **Tốc độ phản hồi** | 🐢 5 ~ 10 giây (Trễ & Xoay vòng tab) | ⚡ **< 1 mili-giây** (Tức thời!) |
-| **Mức độ ảnh hưởng UI** | ⚠️ Nhấp nháy màn hình, chuyển tab liên tục | 🍃 **100% Ẩn danh**, không đổi tab, không ảnh hưởng UI |
-| **Hoạt động ngầm** | ❌ Dừng hoạt động khi thu nhỏ hoặc mất tập trung |  **Hoạt động ngầm liên tục** ngay cả khi thu nhỏ |
-| **Độ tin cậy** | 🔄 Dễ lỗi nếu giao diện DOM thay đổi cấu trúc | 🛡️ **Kép (Dual-Layer)**: Giao thức mạng + Giao diện dự phòng |
+| **Response Speed** | 🐢 5 ~ 10 seconds (Delay & Tab Switching) | ⚡ **< 1 millisecond** (Instantaneous!) |
+| **UI Interference** | ⚠️ Screen flickering, active tab switching | 🍃 **100% Silent**, no tab switching, zero UI impact |
+| **Background execution** | ❌ Paused when minimized or unfocused |  **Runs continuously in background** even if minimized |
+| **Reliability** | 🔄 Prone to errors if the DOM structure changes | 🛡️ **Dual-Layer**: Network interception + DOM fallback |
 
 ---
 
-## 🗺️ Luồng Kiến Trúc (System Architecture)
+## 🗺️ System Architecture
 
 ```mermaid
 graph TD
@@ -46,51 +51,52 @@ graph TD
 
 ---
 
-## 📂 Tổ Chức Thư Mục (Repository Structure)
+## 📂 Repository Structure
 
 ```text
 AutoAG_CLI/
-├── assets/                  # Tài nguyên hình ảnh, logo ứng dụng
-├── scripts/                 # Kịch bản cài đặt, gỡ bỏ và biên dịch
-├── src/                     # Mã nguồn dự án
-│   ├── patch/               # Bản vá Đánh chặn mạng (Javascript)
-│   └── tray/                # Ứng dụng C# System Tray (Khay hệ thống)
-├── install.bat              # Lối tắt cài đặt nhanh (Click-and-Go)
-├── uninstall.bat            # Lối tắt gỡ cài đặt nhanh
-└── AutoAG_Tray.exe          # Tệp chạy System Tray khay hệ thống (Windows)
+├── assets/                  # Image assets (LogoAG.png)
+├── scripts/                 # Compilation, patching and installation scripts
+├── src/                     # Source code
+│   ├── patch/               # Network preloader patch (Javascript)
+│   └── tray/                # Windows System Tray App (C#)
+│       └── Resources/       # Built resolution icons (logo.ico, logo_disabled.ico)
+├── install.bat              # One-click installer shortcut (Root)
+├── uninstall.bat            # One-click uninstaller shortcut
+└── AutoAG_Tray.exe          # Compiled Windows System Tray binary
 ```
 
 ---
 
-## ⚡ Hướng Dẫn Nhanh (Quick Start)
+## ⚡ Quick Start
 
-### 1. Cài Đặt (Installation)
+### 1. Installation
 
 > [!IMPORTANT]
-> Hãy chắc chắn rằng bạn đã mở Antigravity IDE ít nhất một lần trước khi cài đặt.
+> Make sure you have launched Antigravity IDE at least once before installing.
 
-Chạy tệp tin phím tắt ngay tại thư mục gốc:
-* Nhấp đúp vào **`install.bat`** để tự động vá lỗi bảo mật và kích hoạt AutoAG.
+Run the shortcut script directly from the root folder:
+* Double-click **`install.bat`** to automatically patch and activate AutoAG.
 
 ---
 
-### 2. Quản Lý Qua Khay Hệ Thống (System Tray Control)
+### 2. Control via Windows System Tray
 
-Nhấp đúp vào **`AutoAG_Tray.exe`** để mở biểu tượng quản lý tại góc màn hình Windows:
+Double-click **`AutoAG_Tray.exe`** to launch the administration icon in your Windows Taskbar corner:
 
-| Biểu Tượng | Trạng Thái | Mô Tả |
+| System Icon | Action Status | Description |
 | :---: | :--- | :--- |
-| <img src="src/tray/Resources/logo.ico" width="20"/> | **Đang kích hoạt (Active)** | AutoAG đang chặn mạng và duyệt quyền tự động trong `<1ms`! |
-| <img src="src/tray/Resources/logo_disabled.ico" width="20"/> | **Tạm dừng (Disabled)** | Tạm dừng phê duyệt tự động. Trả IDE về trạng thái hỏi quyền mặc định. |
+| <img src="src/tray/Resources/logo.ico" width="20"/> | **Active** | AutoAG is actively intercepting and auto-approving in `<1ms`! |
+| <img src="src/tray/Resources/logo_disabled.ico" width="20"/> | **Disabled** | Autopilot paused. Reverts to default user prompt behavior. |
 
 ---
 
-### 3. Gỡ Cài Đặt (Uninstallation)
+### 3. Uninstallation
 
-Nhấp đúp vào **`uninstall.bat`** tại thư mục gốc để khôi phục Antigravity IDE về trạng thái nguyên bản 100%.
+Double-click **`uninstall.bat`** at the root of the project to completely restore the Antigravity IDE to its original, unpatched state.
 
 ---
 
 <p align="center">
-  Gặp lỗi hoặc cần cải tiến? Hãy mở một Issue hoặc đóng góp Pull Request ngay nhé! ❤️
+  Found a bug or want to suggest updates? Feel free to open an Issue or submit a Pull Request! ❤️
 </p>

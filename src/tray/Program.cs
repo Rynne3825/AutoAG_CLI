@@ -34,6 +34,8 @@ namespace AutoAG_CLI
 
     public class TrayApplicationContext : ApplicationContext
     {
+        private const string CurrentVersion = "v1.1.0";
+
         private NotifyIcon notifyIcon;
         private ContextMenu contextMenu;
         private MenuItem toggleItem;
@@ -75,19 +77,80 @@ namespace AutoAG_CLI
             notifyIcon.ContextMenu = contextMenu;
             notifyIcon.Visible = true;
             notifyIcon.DoubleClick += ToggleAutoSubmit;
+            notifyIcon.BalloonTipClicked += OnBalloonTipClicked;
 
             // Update Icon and Tooltip
             UpdateIconAndTooltip();
 
             // Run the automated patcher silently on startup
             RunPatcherSilently();
+
+            // Check for updates asynchronously in background thread
+            CheckForUpdates();
+        }
+
+        private void CheckForUpdates()
+        {
+            System.Threading.ThreadPool.QueueUserWorkItem(state =>
+            {
+                try
+                {
+                    // Delay check by 3 seconds for smooth startup
+                    System.Threading.Thread.Sleep(3000);
+
+                    using (System.Net.WebClient client = new System.Net.WebClient())
+                    {
+                        // Supply user agent header as required by GitHub
+                        client.Headers.Add("User-Agent", "AutoAG_Tray_Updater");
+
+                        // Fetch latest version string from raw GitHub CDN
+                        string rawVersion = client.DownloadString("https://raw.githubusercontent.com/Rynne3825/AutoAG_CLI/main/version.txt");
+
+                        if (!string.IsNullOrEmpty(rawVersion))
+                        {
+                            string latestVersion = rawVersion.Trim();
+
+                            // Trigger notification if version mismatch detected
+                            if (latestVersion != CurrentVersion)
+                            {
+                                notifyIcon.ShowBalloonTip(
+                                    5000,
+                                    "✨ AutoAG CLI - Có cập nhật mới! / New Update!",
+                                    string.Format("Đã có phiên bản {0} (Hiện tại: {1}). Nhấn vào đây để tải về! / Version {0} is available. Click here to download!", latestVersion, CurrentVersion),
+                                    ToolTipIcon.Info
+                                );
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error checking for updates: " + ex.Message);
+                }
+            });
+        }
+
+        private void OnBalloonTipClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start("https://github.com/Rynne3825/AutoAG_CLI");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to open update URL: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void RunPatcherSilently()
         {
             try
             {
-                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patcher.ps1");
+                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"scripts\patcher.ps1");
+                if (!File.Exists(scriptPath))
+                {
+                    scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "patcher.ps1"); // Fallback
+                }
                 if (File.Exists(scriptPath))
                 {
                     System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo();
