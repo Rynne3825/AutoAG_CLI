@@ -1,4 +1,5 @@
-// Auto-submit Command Execution Requests (Ultimate Network & DOM Hybrid Edition)
+// Auto-submit Command Execution Requests (Ultimate Network & DOM Hybrid Edition v2)
+// Shadow Stream Monitor: Maintains independent background streams for ALL sessions
 (() => {
     console.log('[Auto-Submit] Preload patch loading...');
 
@@ -6,6 +7,185 @@
     if (!window.approvedNetworkSteps) {
         window.approvedNetworkSteps = new Set();
     }
+
+    // =========================================================================
+    // Shadow Stream Manager - Maintains background streams for ALL conversations
+    // =========================================================================
+    const ShadowStreamManager = {
+        activeStreams: {},      // conversationId -> AbortController
+        knownConversations: new Set(),
+        currentActiveConv: null,
+        subscriberCounter: 0,
+        isEnabled: true,
+
+        generateSubscriberId() {
+            // Simple UUID-like generator
+            const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+            return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+        },
+
+        checkSettings() {
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const os = require('os');
+                const settingsPath = path.join(os.homedir(), '.gemini', 'antigravity', 'autosubmit.json');
+                if (fs.existsSync(settingsPath)) {
+                    const config = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+                    this.isEnabled = config.enabled !== false;
+                }
+            } catch (e) {}
+            return this.isEnabled;
+        },
+
+        registerConversation(conversationId) {
+            if (!conversationId || this.knownConversations.has(conversationId)) return;
+            this.knownConversations.add(conversationId);
+            console.log(`[Shadow Stream] Registered conversation: ${conversationId}`);
+            this.ensureBackgroundStreams();
+        },
+
+        setActiveConversation(conversationId) {
+            if (this.currentActiveConv === conversationId) return;
+            const oldActive = this.currentActiveConv;
+            this.currentActiveConv = conversationId;
+            console.log(`[Shadow Stream] Active conversation changed: ${oldActive?.substring(0, 8)}... -> ${conversationId?.substring(0, 8)}...`);
+            // When active conversation changes, the frontend creates its own stream.
+            // We need to create shadow streams for conversations that are NO LONGER active.
+            if (oldActive && oldActive !== conversationId) {
+                // Give the frontend a moment to close its own stream, then create our shadow
+                setTimeout(() => this.createShadowStream(oldActive), 1000);
+            }
+            // Kill shadow stream for the newly active conversation (frontend handles it)
+            this.killShadowStream(conversationId);
+        },
+
+        killShadowStream(conversationId) {
+            if (this.activeStreams[conversationId]) {
+                console.log(`[Shadow Stream] Killing shadow stream for ${conversationId.substring(0, 8)}... (frontend took over)`);
+                this.activeStreams[conversationId].abort();
+                delete this.activeStreams[conversationId];
+            }
+        },
+
+        async createShadowStream(conversationId) {
+            if (!this.checkSettings()) return;
+            if (this.activeStreams[conversationId]) return; // Already has a shadow stream
+            if (conversationId === this.currentActiveConv) return; // Frontend handles active conv
+
+            const subscriberId = this.generateSubscriberId();
+            const controller = new AbortController();
+            this.activeStreams[conversationId] = controller;
+
+            const payloadObj = {
+                conversationId: conversationId,
+                subscriberId: subscriberId,
+                initialStepsPageBounds: { startIndex: -50 },
+                initialGeneratorMetadatasPageBounds: { startIndex: -1 },
+                initialExecutorMetadatasPageBounds: { endIndexExclusive: 0 }
+            };
+            const jsonStr = JSON.stringify(payloadObj);
+            const encodedPayload = encodeGrpcWebPayload(jsonStr);
+
+            console.log(`🔌 [Shadow Stream] Opening background stream for conversation ${conversationId.substring(0, 8)}...`);
+
+            try {
+                const response = await originalFetchRef('/exa.language_server_pb.LanguageServerService/StreamAgentStateUpdates', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/grpc-web+json',
+                        'accept': 'application/grpc-web+json'
+                    },
+                    body: encodedPayload,
+                    signal: controller.signal
+                });
+
+                if (!response.ok || !response.body) {
+                    console.warn(`[Shadow Stream] Failed to open stream for ${conversationId.substring(0, 8)}...: status ${response.status}`);
+                    delete this.activeStreams[conversationId];
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        console.log(`[Shadow Stream] Stream ended for ${conversationId.substring(0, 8)}...`);
+                        break;
+                    }
+
+                    try {
+                        const text = decoder.decode(value, { stream: true });
+                        this.processStreamChunk(text, conversationId);
+                    } catch (chunkErr) {
+                        // Silently continue on chunk parse errors
+                    }
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    console.log(`[Shadow Stream] Stream aborted for ${conversationId.substring(0, 8)}...`);
+                } else {
+                    console.warn(`[Shadow Stream] Stream error for ${conversationId.substring(0, 8)}...:`, err.message);
+                }
+            } finally {
+                delete this.activeStreams[conversationId];
+            }
+        },
+
+        processStreamChunk(text, cascadeId) {
+            if (!text.includes('"trajectoryId"') || !text.includes('"stepIndex"')) return;
+
+            const trajMatches = [...text.matchAll(/"trajectoryId":"([^"]+)"/g)];
+            const stepMatches = [...text.matchAll(/"stepIndex":(\d+)/g)];
+
+            if (trajMatches.length === 0 || stepMatches.length === 0) return;
+
+            // Check for permission-related content
+            if (text.includes('permission') || text.includes('allow') || text.includes('WAITING_FOR_USER_PERMISSION')) {
+                const trajectoryId = trajMatches[0][1];
+                const stepIndex = parseInt(stepMatches[0][1], 10);
+                const approvalKey = `${cascadeId}-${trajectoryId}-${stepIndex}`;
+
+                if (!window.approvedNetworkSteps.has(approvalKey)) {
+                    window.approvedNetworkSteps.add(approvalKey);
+                    console.log(`🚀 [Shadow Stream] Auto-approving BACKGROUND permission:
+  - Conversation: ${cascadeId.substring(0, 12)}...
+  - Trajectory: ${trajectoryId.substring(0, 12)}...
+  - Step: ${stepIndex}`);
+                    autoApproveViaNetwork(cascadeId, trajectoryId, stepIndex);
+                }
+            }
+        },
+
+        ensureBackgroundStreams() {
+            for (const convId of this.knownConversations) {
+                if (convId !== this.currentActiveConv && !this.activeStreams[convId]) {
+                    this.createShadowStream(convId);
+                }
+            }
+        },
+
+        scanDOMForConversations() {
+            try {
+                const links = Array.from(document.querySelectorAll('a'));
+                for (const link of links) {
+                    const href = link.getAttribute('href') || '';
+                    const match = href.match(/\/c\/([a-f0-9-]{36})/);
+                    if (match) {
+                        this.registerConversation(match[1]);
+                    }
+                }
+
+                // Detect currently active conversation from URL
+                const pathMatch = window.location.pathname.match(/\/c\/([a-f0-9-]{36})/);
+                if (pathMatch) {
+                    this.setActiveConversation(pathMatch[1]);
+                }
+            } catch (e) {}
+        }
+    };
 
     // Helper to encode JSON to gRPC-web frame format (5-byte header + JSON body)
     function encodeGrpcWebPayload(jsonStr) {
@@ -26,25 +206,10 @@
 
     // Direct network approval sender
     function autoApproveViaNetwork(cascadeId, trajectoryId, stepIndex) {
-        if (!cascadeId) {
-            console.error('[Auto-Submit Network] Cannot approve: cascadeId is null');
-            return;
-        }
+        if (!cascadeId) return;
 
-        const fs = require('fs');
-        const path = require('path');
-        const os = require('os');
-        const settingsPath = path.join(os.homedir(), '.gemini', 'antigravity', 'autosubmit.json');
-        let autoSubmitEnabled = true;
-        try {
-            if (fs.existsSync(settingsPath)) {
-                const config = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-                autoSubmitEnabled = config.enabled !== false;
-            }
-        } catch (e) {}
-
-        if (!autoSubmitEnabled) {
-            console.log('[Auto-Submit Network] Auto-Submit is disabled in settings. Skipping approval.');
+        if (!ShadowStreamManager.checkSettings()) {
+            console.log('[Auto-Submit Network] Disabled in settings. Skipping.');
             return;
         }
 
@@ -63,9 +228,9 @@
             const encodedPayload = encodeGrpcWebPayload(jsonStr);
             
             const approveUrl = '/exa.language_server_pb.LanguageServerService/HandleCascadeUserInteraction';
-            console.log(`[Auto-Submit Network] Sending direct gRPC-web approval request for Cascade: ${cascadeId}, Step: ${stepIndex}...`);
+            console.log(`[Auto-Submit Network] Sending approval: Cascade=${cascadeId.substring(0, 8)}..., Step=${stepIndex}`);
             
-            fetch(approveUrl, {
+            originalFetchRef(approveUrl, {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/grpc-web+json',
@@ -74,29 +239,31 @@
                 body: encodedPayload
             })
             .then(res => res.text())
-            .then(resText => {
-                console.log('[Auto-Submit Network] Direct gRPC-web approval acknowledged by Language Server!');
+            .then(() => {
+                console.log('[Auto-Submit Network] Approval acknowledged!');
             })
             .catch(err => {
-                console.error('[Auto-Submit Network] gRPC-web approval POST failed:', err);
+                console.error('[Auto-Submit Network] Approval POST failed:', err);
             });
         } catch (err) {
-            console.error('[Auto-Submit Network] Failed to compile approval package:', err);
+            console.error('[Auto-Submit Network] Failed to compile approval:', err);
         }
     }
 
     // ---------------------------------------------------------------------------
-    // Synchronous Network Interception Hooks (Direct gRPC-Web Stream Hook)
+    // Network Interception Hooks (gRPC-Web Stream Hook)
     // ---------------------------------------------------------------------------
+    // Store original fetch reference BEFORE hooking (shadow streams use this)
+    const originalFetchRef = window.fetch;
+
     try {
         console.log('[Auto-Submit] Installing gRPC-web network interceptor hooks...');
 
         // Hook window.fetch
-        const originalFetch = window.fetch;
         window.fetch = async function(resource, init) {
             const url = typeof resource === 'string' ? resource : (resource.url || '');
             
-            // Intercept StreamAgentStateUpdates to capture permission requests in real-time
+            // Intercept StreamAgentStateUpdates to capture permission requests
             if (url.includes('/StreamAgentStateUpdates')) {
                 let cascadeId = null;
                 try {
@@ -111,13 +278,16 @@
                     const convMatch = reqText.match(/"conversationId":"([^"]+)"/);
                     if (convMatch) {
                         cascadeId = convMatch[1];
-                        console.log(`[Auto-Submit Network] Hooked state update stream for Conversation: ${cascadeId}`);
+                        // Register this conversation and mark it as active (frontend is opening stream for it)
+                        ShadowStreamManager.registerConversation(cascadeId);
+                        ShadowStreamManager.setActiveConversation(cascadeId);
+                        console.log(`[Auto-Submit Network] Frontend stream opened for: ${cascadeId.substring(0, 12)}...`);
                     }
                 } catch (e) {
                     console.error('[Auto-Submit Network] Failed to parse request body:', e);
                 }
 
-                const response = await originalFetch.apply(this, arguments);
+                const response = await originalFetchRef.apply(this, arguments);
                 if (!response.ok || !response.body) {
                     return response;
                 }
@@ -142,7 +312,6 @@
                                 try {
                                     const text = decoder.decode(value, { stream: true });
                                     
-                                    // Parse stream chunks for permission triggers
                                     if (text.includes('"trajectoryId"') && text.includes('"stepIndex"')) {
                                         const trajMatches = [...text.matchAll(/"trajectoryId":"([^"]+)"/g)];
                                         const stepMatches = [...text.matchAll(/"stepIndex":(\d+)/g)];
@@ -151,15 +320,14 @@
                                             const trajectoryId = trajMatches[0][1];
                                             const stepIndex = parseInt(stepMatches[0][1], 10);
                                             
-                                            // Check if this chunk is requesting permissions
                                             if (text.includes('permission') || text.includes('allow') || text.includes('WAITING_FOR_USER_PERMISSION')) {
                                                 const approvalKey = `${activeCascadeId}-${trajectoryId}-${stepIndex}`;
                                                 
                                                 if (!window.approvedNetworkSteps.has(approvalKey)) {
                                                     window.approvedNetworkSteps.add(approvalKey);
                                                     
-                                                    console.log(`🚀 [Auto-Submit Network] Automatically approved background permission request:
-  - Conversation (Cascade): ${activeCascadeId}
+                                                    console.log(`🚀 [Auto-Submit Network] Auto-approved ACTIVE session permission:
+  - Conversation: ${activeCascadeId}
   - Trajectory: ${trajectoryId}
   - Step Index: ${stepIndex}`);
                                                     
@@ -168,9 +336,7 @@
                                             }
                                         }
                                     }
-                                } catch (chunkErr) {
-                                    console.error('[Auto-Submit Network] Error processing chunk:', chunkErr);
-                                }
+                                } catch (chunkErr) {}
                                 
                                 controller.enqueue(value);
                             }
@@ -187,20 +353,9 @@
                 });
             }
             
-            return originalFetch.apply(this, arguments);
+            return originalFetchRef.apply(this, arguments);
         };
 
-        // Hook window.XMLHttpRequest (XHR) for diagnostics
-        const originalOpen = window.XMLHttpRequest.prototype.open;
-        window.XMLHttpRequest.prototype.open = function(method, url, ...args) {
-            return originalOpen.apply(this, [method, url, ...args]);
-        };
-
-        // Hook window.WebSocket for diagnostics
-        const OriginalWebSocket = window.WebSocket;
-        window.WebSocket = function(...args) {
-            return new OriginalWebSocket(...args);
-        };
         console.log('[Auto-Submit] gRPC-web network interceptor hooks installed successfully.');
     } catch (e) {
         console.error('[Auto-Submit] Failed to install network hooks:', e);
@@ -217,11 +372,25 @@
 
         console.log('[Auto-Submit] Preload patch DOM listener initialized.');
 
-        let lastUserActivity = Date.now();
-        window.addEventListener('mousemove', () => { lastUserActivity = Date.now(); });
-        window.addEventListener('keydown', () => { lastUserActivity = Date.now(); });
-        window.addEventListener('mousedown', () => { lastUserActivity = Date.now(); });
-        window.addEventListener('scroll', () => { lastUserActivity = Date.now(); });
+        // Periodically scan DOM for conversation links and create shadow streams
+        setInterval(() => {
+            ShadowStreamManager.scanDOMForConversations();
+        }, 5000);
+        // Initial scan
+        setTimeout(() => ShadowStreamManager.scanDOMForConversations(), 2000);
+
+        // Watch for URL changes (user switching sessions via clicks)
+        let lastPath = window.location.pathname;
+        setInterval(() => {
+            const currentPath = window.location.pathname;
+            if (currentPath !== lastPath) {
+                lastPath = currentPath;
+                const pathMatch = currentPath.match(/\/c\/([a-f0-9-]{36})/);
+                if (pathMatch) {
+                    ShadowStreamManager.setActiveConversation(pathMatch[1]);
+                }
+            }
+        }, 500);
 
         function checkAndSubmit() {
             let autoSubmitEnabled = true;
@@ -286,50 +455,6 @@
             }
         }
 
-        function checkBackgroundSessions() {
-            const hasFocus = document.hasFocus();
-            const timeSinceLastActivity = Date.now() - lastUserActivity;
-
-            if (hasFocus && timeSinceLastActivity < 5000) {
-                return;
-            }
-
-            const sessionLinks = Array.from(document.querySelectorAll('a')).filter(a => {
-                const href = a.getAttribute('href') || '';
-                return href.includes('/c/') && !href.includes('/c/new');
-            });
-
-            if (sessionLinks.length <= 1) {
-                return;
-            }
-
-            const currentPath = window.location.pathname;
-            const activeLink = sessionLinks.find(a => a.getAttribute('href') === currentPath);
-            const backgroundLinks = sessionLinks.filter(a => a.getAttribute('href') !== currentPath);
-
-            if (backgroundLinks.length === 0) {
-                return;
-            }
-
-            if (!window.nextBackgroundIndex) {
-                window.nextBackgroundIndex = 0;
-            }
-            const targetIndex = window.nextBackgroundIndex % backgroundLinks.length;
-            const targetLink = backgroundLinks[targetIndex];
-            window.nextBackgroundIndex++;
-
-            const targetHref = targetLink.getAttribute('href');
-            console.log('[Auto-Submit DOM Fallback] Out-of-focus or Idle scanning background session:', targetHref);
-
-            targetLink.click();
-
-            setTimeout(() => {
-                if (activeLink) {
-                    activeLink.click();
-                }
-            }, 60);
-        }
-
         if (document.documentElement) {
             let debounceTimer = null;
             const observer = new MutationObserver(() => {
@@ -346,7 +471,6 @@
             });
 
             setInterval(checkAndSubmit, 300);
-            setInterval(checkBackgroundSessions, 3000);
             checkAndSubmit();
         }
     }
