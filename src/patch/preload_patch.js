@@ -169,12 +169,31 @@
 
         scanDOMForConversations() {
             try {
+                // 1. Scan all standard anchor elements
                 const links = Array.from(document.querySelectorAll('a'));
                 for (const link of links) {
                     const href = link.getAttribute('href') || '';
                     const match = href.match(/\/c\/([a-f0-9-]{36})/);
                     if (match) {
                         this.registerConversation(match[1]);
+                    }
+                }
+
+                // 2. Scan for elements with UUID attributes to capture custom project elements
+                const uuidRegex = /[a-f0-9]{8}-[a-f0-9]{4}-[4a-f0-9]{4}-[89ab][a-f0-9]{3}-[a-f0-9]{12}/i;
+                
+                // Scan sidebar container or fallback to all elements with potential IDs
+                const elements = document.querySelectorAll('[data-id], [id], [class]');
+                for (const el of elements) {
+                    const dataId = el.getAttribute('data-id') || '';
+                    if (uuidRegex.test(dataId)) {
+                        this.registerConversation(dataId.match(uuidRegex)[0]);
+                        continue;
+                    }
+                    
+                    const id = el.getAttribute('id') || '';
+                    if (uuidRegex.test(id)) {
+                        this.registerConversation(id.match(uuidRegex)[0]);
                     }
                 }
 
