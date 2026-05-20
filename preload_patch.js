@@ -36,7 +36,12 @@
             }
 
             const bodyText = document.body ? (document.body.innerText || '') : '';
-            if (bodyText.includes('Allow running this command?')) {
+            if (bodyText.includes('Allow running this command?') || 
+                bodyText.includes('Allow read access to this path?') || 
+                bodyText.includes('Allow write access to this path?') ||
+                bodyText.includes('Allow read/write access to this path?') ||
+                bodyText.includes('Allow filesystem access?') ||
+                bodyText.includes('access to this path?')) {
                 // Find all potential button elements robustly
                 const allElements = Array.from(document.querySelectorAll('button, [role="button"], div, span, a'));
                 
