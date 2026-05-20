@@ -103,7 +103,28 @@ namespace AutoAG_IconGenerator
                                 g.SetClip(clipPath);
                             }
                             
-                            g.DrawImage(srcBmp, 0, 0, size, size);
+                            // Crop/zoom the center of LogoAG.png for small icons to make it look much larger in the system tray!
+                            int srcWidth = srcBmp.Width;
+                            int srcHeight = srcBmp.Height;
+                            RectangleF srcRect;
+
+                            if (size <= 48)
+                            {
+                                // Zoom in on the central 70% of the logo to discard the wide dark border and make it huge and clear!
+                                float zoomFactor = 0.70f;
+                                float cropWidth = srcWidth * zoomFactor;
+                                float cropHeight = srcHeight * zoomFactor;
+                                float x = (srcWidth - cropWidth) / 2f;
+                                float y = (srcHeight - cropHeight) / 2f;
+                                srcRect = new RectangleF(x, y, cropWidth, cropHeight);
+                            }
+                            else
+                            {
+                                // Keep the full view for the high-res 256x256 icon
+                                srcRect = new RectangleF(0, 0, srcWidth, srcHeight);
+                            }
+
+                            g.DrawImage(srcBmp, new RectangleF(0, 0, size, size), srcRect, GraphicsUnit.Pixel);
                         }
 
                         using (MemoryStream ms = new MemoryStream())

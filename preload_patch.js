@@ -88,8 +88,12 @@
 
             observer.observe(document.documentElement, {
                 childList: true,
-                subtree: true
+                subtree: true,
+                characterData: true // Watch for live React text updates!
             });
+
+            // Polling fallback every 300ms guarantees background sessions auto-submit immediately!
+            setInterval(checkAndSubmit, 300);
 
             // Initial check
             checkAndSubmit();
