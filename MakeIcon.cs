@@ -9,17 +9,17 @@ namespace AutoAG_IconGenerator
     {
         public static void Main()
         {
-            string pngPath = "logo.png";
+            string pngPath = "LogoAG.png";
             string activeOut = "logo.ico";
             string disabledOut = "logo_disabled.ico";
 
             if (!File.Exists(pngPath))
             {
-                Console.WriteLine("Error: logo.png not found!");
+                Console.WriteLine("Error: LogoAG.png not found!");
                 return;
             }
 
-            Console.WriteLine("Loading pixel-perfect logo.png...");
+            Console.WriteLine("Loading premium LogoAG.png...");
             try
             {
                 using (Bitmap srcBmp = new Bitmap(pngPath))
@@ -35,7 +35,7 @@ namespace AutoAG_IconGenerator
                         GenerateIconFromPng(grayBmp, sizes, disabledOut);
                     }
                 }
-                Console.WriteLine("Success: Dynamic multi-resolution icons generated perfectly from logo.png!");
+                Console.WriteLine("Success: Dynamic multi-resolution icons generated perfectly from LogoAG.png!");
             }
             catch (Exception ex)
             {
