@@ -96,6 +96,13 @@ namespace AutoAG_IconGenerator
                             g.CompositingQuality = CompositingQuality.HighQuality;
                             g.Clear(Color.Transparent);
                             
+                            // Apply rounded rectangle clipping mask to perfectly remove white corners
+                            float radius = 160f * (size / 800f);
+                            using (GraphicsPath clipPath = GetRoundedRectPath(0, 0, size, size, radius))
+                            {
+                                g.SetClip(clipPath);
+                            }
+                            
                             g.DrawImage(srcBmp, 0, 0, size, size);
                         }
 
@@ -130,6 +137,19 @@ namespace AutoAG_IconGenerator
                 }
             }
             Console.WriteLine("Generated standard Windows Icon: " + outputPath);
+        }
+
+        private static GraphicsPath GetRoundedRectPath(float x, float y, float width, float height, float radius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            float diameter = radius * 2;
+            path.StartFigure();
+            path.AddArc(x, y, diameter, diameter, 180, 90);
+            path.AddArc(x + width - diameter, y, diameter, diameter, 270, 90);
+            path.AddArc(x + width - diameter, y + height - diameter, diameter, diameter, 0, 90);
+            path.AddArc(x, y + height - diameter, diameter, diameter, 90, 90);
+            path.CloseFigure();
+            return path;
         }
     }
 }
