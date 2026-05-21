@@ -35,15 +35,6 @@ if (!(Test-Path $asarFile)) {
     Exit 1
 }
 
-# 2.5 Quick check if app.asar is already patched to prevent unnecessary closing
-Write-Host "Dang kiem tra trang thai ban va..." -ForegroundColor Yellow
-$isPatched = Select-String -Path $asarFile -Pattern "Auto-submit Command Execution Requests" -Quiet
-
-if ($isPatched -and !$NoKill) {
-    Write-Host "Antigravity da duoc va tu truoc! Khong can thuc hien lai." -ForegroundColor Green
-    Exit 0
-}
-
 # 2.6 Close Antigravity if it is running to prevent file locks (Skipped if -NoKill is specified)
 $antigravityProcess = Get-Process -Name "Antigravity" -ErrorAction SilentlyContinue
 $wasRunning = $false

@@ -184,12 +184,17 @@
             console.log(`🔌 [Shadow Stream] Opening background stream for ${conversationId.substring(0, 8)}...`);
 
             try {
+                const customHeaders = window.cachedGrpcHeaders || {};
+                const headers = Object.assign({
+                    'content-type': 'application/grpc-web+json',
+                    'accept': 'application/grpc-web+json'
+                }, customHeaders);
+
+                console.log(`🔌 [Shadow Stream] Requesting with headers:`, headers);
+
                 const response = await originalFetchRef('/exa.language_server_pb.LanguageServerService/StreamAgentStateUpdates', {
                     method: 'POST',
-                    headers: {
-                        'content-type': 'application/grpc-web+json',
-                        'accept': 'application/grpc-web+json'
-                    },
+                    headers: headers,
                     body: encodedPayload,
                     signal: controller.signal
                 });
@@ -236,8 +241,8 @@
             const frameStr = JSON.stringify(frame);
             if (!frameStr.includes('trajectoryId') || !frameStr.includes('stepIndex')) return;
 
-            // Check for permission-related content
-            if (frameStr.includes('permission') || frameStr.includes('WAITING_FOR_USER') || frameStr.includes('askPermission')) {
+            // Check for permission-related content or run_command tool calls that might need approval
+            if (frameStr.includes('permission') || frameStr.includes('WAITING_FOR_USER') || frameStr.includes('askPermission') || frameStr.includes('"run_command"')) {
                 const trajMatch = frameStr.match(/"trajectoryId":"([^"]+)"/);
                 const stepMatch = frameStr.match(/"stepIndex":(\d+)/);
                 if (!trajMatch || !stepMatch) return;
@@ -337,12 +342,15 @@
             const approveUrl = '/exa.language_server_pb.LanguageServerService/HandleCascadeUserInteraction';
             console.log(`[Auto-Submit Network] Sending approval: Cascade=${cascadeId.substring(0, 8)}..., Step=${stepIndex}`);
 
+            const customHeaders = window.cachedGrpcHeaders || {};
+            const headers = Object.assign({
+                'content-type': 'application/grpc-web+json',
+                'accept': 'application/grpc-web+json'
+            }, customHeaders);
+
             originalFetchRef(approveUrl, {
                 method: 'POST',
-                headers: {
-                    'content-type': 'application/grpc-web+json',
-                    'accept': 'application/grpc-web+json'
-                },
+                headers: headers,
                 body: encodedPayload
             })
             .then(res => res.text())
@@ -365,14 +373,32 @@
             const url = typeof resource === 'string' ? resource : (resource.url || '');
 
             if (url.includes('/StreamAgentStateUpdates')) {
+                // Capture and cache security headers (CSRF tokens)
+                if (init && init.headers) {
+                    const headers = {};
+                    if (init.headers instanceof Headers) {
+                        init.headers.forEach((val, key) => { headers[key] = val; });
+                    } else if (Array.isArray(init.headers)) {
+                        for (const [key, val] of init.headers) { headers[key] = val; }
+                    } else {
+                        Object.assign(headers, init.headers);
+                    }
+                    window.cachedGrpcHeaders = headers;
+                    console.log('%c[Auto-Submit Network] Captured CSRF & Security Headers!', 'color: #00ffcc; font-weight: bold;', headers);
+                }
+
                 let cascadeId = null;
                 try {
                     let reqText = '';
                     if (init && init.body) {
-                        if (init.body instanceof Uint8Array || init.body instanceof ArrayBuffer) {
-                            reqText = new TextDecoder().decode(init.body);
-                        } else if (typeof init.body === 'string') {
-                            reqText = init.body;
+                        try {
+                            if (typeof init.body === 'string') {
+                                reqText = init.body;
+                            } else {
+                                reqText = new TextDecoder().decode(init.body);
+                            }
+                        } catch (decodeErr) {
+                            // Suppress decode error
                         }
                     }
                     const convMatch = reqText.match(/"conversationId":"([^"]+)"/);
@@ -380,7 +406,7 @@
                         cascadeId = convMatch[1];
                         ShadowStreamManager.registerConversation(cascadeId);
                         ShadowStreamManager.setActiveConversation(cascadeId);
-                        console.log(`[Auto-Submit Network] Frontend stream opened for: ${cascadeId.substring(0, 12)}...`);
+                        console.log(`%c[Auto-Submit Network] Frontend stream opened for: ${cascadeId.substring(0, 12)}...`, 'color: #00ffcc;');
                     }
                 } catch (e) {
                     console.error('[Auto-Submit Network] Failed to parse request body:', e);
@@ -407,7 +433,7 @@
                                     for (const frame of frames) {
                                         const frameStr = JSON.stringify(frame);
                                         if (frameStr.includes('trajectoryId') && frameStr.includes('stepIndex')) {
-                                            if (frameStr.includes('permission') || frameStr.includes('WAITING_FOR_USER') || frameStr.includes('askPermission')) {
+                                            if (frameStr.includes('permission') || frameStr.includes('WAITING_FOR_USER') || frameStr.includes('askPermission') || frameStr.includes('"run_command"')) {
                                                 const trajMatch = frameStr.match(/"trajectoryId":"([^"]+)"/);
                                                 const stepMatch = frameStr.match(/"stepIndex":(\d+)/);
                                                 if (trajMatch && stepMatch) {
@@ -500,16 +526,8 @@
 
             const allElements = Array.from(document.querySelectorAll('button, [role="button"], div, span, a'));
 
-            // 1. Auto-click Review buttons
-            const reviewButtons = allElements.filter(el => {
-                const text = (el.textContent || '').trim().toLowerCase();
-                return text === 'review' || text === 'xem xét' || text === 'xem lại' || text === 'xem';
-            });
-            for (const btn of reviewButtons) {
-                console.log('[Auto-Submit DOM] Auto-clicking Review button...');
-                btn.click();
-            }
-
+            // 1. Removed Auto-click Review buttons to prevent spamming the IDE's Review tab
+            
             const bodyText = document.body ? (document.body.textContent || '') : '';
 
             // 2. Permission prompt handling
@@ -553,10 +571,16 @@
                 // Click Submit / Approve / Confirm
                 const submitButton = allElements.find(el => {
                     const text = (el.textContent || '').trim().toLowerCase();
-                    return text === 'submit' || text === 'gửi' || text === 'đồng ý' || text === 'allow' || text === 'approve' || text === 'confirm' || text === 'chấp nhận';
+                    const isButtonLike = el.tagName === 'BUTTON' || el.getAttribute('role') === 'button' || el.classList.contains('button') || el.classList.contains('btn');
+                    if (isButtonLike) {
+                        return text.includes('submit') || text.includes('gửi') || text.includes('đồng ý') || text.includes('allow') || text.includes('approve') || text.includes('confirm') || text.includes('chấp nhận');
+                    }
+                    // For other elements, require closer match but strip symbols like ↵ and newlines
+                    const cleanText = text.replace(/↵|\n|\r/g, '').trim().toLowerCase();
+                    return cleanText === 'submit' || cleanText === 'gửi' || cleanText === 'đồng ý' || cleanText === 'allow' || cleanText === 'approve' || cleanText === 'confirm' || cleanText === 'chấp nhận';
                 });
                 if (submitButton) {
-                    console.log('[Auto-Submit DOM] Auto-approving permission dialog...');
+                    console.log('%c[Auto-Submit DOM] Auto-approving permission dialog...', 'color: #00ffcc; font-weight: bold;');
                     submitButton.click();
                 }
             }
