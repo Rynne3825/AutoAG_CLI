@@ -274,6 +274,7 @@
                         lastBaseUrl = baseUrl;
                         logToFile(`[Event] Received Base URL from main world: ${lastBaseUrl}`);
                     }
+                    registerSessionInCoverageFile(activeForegroundConversationId || 'global');
                     manageShadowStreams();
                 }
             } else if (type === 'conversation-discovered') {
@@ -415,6 +416,13 @@
             // CHỈ đặt currentActiveConversation khi cửa sổ này thực sự có tiêu điểm (focus)
             if (document.hasFocus() && activeForegroundConversationId) {
                 data.currentActiveConversation = activeForegroundConversationId;
+            }
+
+            if (lastHeaders && lastHeaders['x-codeium-csrf-token']) {
+                data.sharedCsrfToken = lastHeaders['x-codeium-csrf-token'];
+            }
+            if (lastBaseUrl) {
+                data.sharedBaseUrl = lastBaseUrl;
             }
 
             data.generatedAt = new Date().toISOString();
@@ -853,6 +861,19 @@
             }
             try {
                 const data = JSON.parse(raw);
+                if (data) {
+                    if (data.sharedCsrfToken && (!lastHeaders || lastHeaders['x-codeium-csrf-token'] !== data.sharedCsrfToken)) {
+                        lastHeaders = {
+                            ...defaultHeaders,
+                            'x-codeium-csrf-token': data.sharedCsrfToken
+                        };
+                        logToFile(`[Sync] Loaded shared CSRF Token from coverage file: ${data.sharedCsrfToken}`);
+                    }
+                    if (data.sharedBaseUrl && lastBaseUrl !== data.sharedBaseUrl) {
+                        lastBaseUrl = data.sharedBaseUrl;
+                        logToFile(`[Sync] Loaded shared Base URL from coverage file: ${lastBaseUrl}`);
+                    }
+                }
                 // TUYỆT ĐỐI KHÔNG cập nhật activeForegroundConversationId của cửa sổ này từ tệp dùng chung
                 // Điều này chặn hoàn toàn vòng lặp ping-pong giữa các session!
                 if (data && Array.isArray(data.sessions)) {
