@@ -25,7 +25,9 @@ if (Test-Path $localPath) {
 
 $asarFile = Join-Path $targetDir "app.asar"
 $asarBakFile = Join-Path $targetDir "app.asar.bak"
-$exePath = Join-Path (Split-Path -Parent $targetDir) "Antigravity.exe"
+
+$parentDir = Split-Path -Parent $targetDir
+$exePath = Join-Path $parentDir "Antigravity.exe"
 
 Write-Host "Da tim thay Antigravity tai: $targetDir" -ForegroundColor Green
 
@@ -45,7 +47,7 @@ if ($antigravityProcess) {
     } else {
         $wasRunning = $true
         Write-Host "Phat hien Antigravity dang chay. Dang tu dong dong de ap dung ban va..." -ForegroundColor Yellow
-        Stop-Process -Name "Antigravity" -Force
+        Stop-Process -Name "Antigravity" -Force -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 1.5
     }
 }
@@ -114,21 +116,81 @@ if (!(Test-Path $patchFile)) {
 $injectionCode = Get-Content $patchFile -Raw
 $newPreloadContent = $preloadContent + "`r`n`r`n" + $injectionCode
 Set-Content -Path $preloadFile -Value $newPreloadContent
+
+Write-Host "Dang kiem tra cu phap preload.js sau khi tiem ma..." -ForegroundColor Yellow
+node --check $preloadFile | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "preload.js sau khi tiem ma bi loi cu phap. Dung dong goi de tranh lam hong Antigravity."
+    Exit 1
+}
 Write-Host "Da tiem ma va nang cap thanh cong!" -ForegroundColor Green
 
-# 6.5 Inject sandbox: false into dist/utils.js to enable full Node.js APIs in preload
+# 6.5 Inject sandbox: false into dist/utils.js to enable Node.js APIs in preload
 $utilsFile = Join-Path $tempDir "dist\utils.js"
 if (Test-Path $utilsFile) {
     $utilsContent = Get-Content $utilsFile -Raw
+    $modified = $false
+
     if ($utilsContent -match "preload: path_1\.default\.join") {
         if (!($utilsContent -match "sandbox: false")) {
-            Write-Host "Dang vo hieu hoa Sandbox trong dist/utils.js..." -ForegroundColor Yellow
-            $utilsContent = $utilsContent -replace "preload: path_1\.default\.join", "sandbox: false,`r`n            preload: path_1.default.join"
-            Set-Content -Path $utilsFile -Value $utilsContent
-            Write-Host "Da vo hieu hoa Sandbox thanh cong!" -ForegroundColor Green
+            Write-Host "Dang vo hieu hoa Sandbox va Background Throttling trong dist/utils.js..." -ForegroundColor Yellow
+            $utilsContent = $utilsContent -replace "preload: path_1\.default\.join", "sandbox: false,`r`n            backgroundThrottling: false,`r`n            preload: path_1.default.join"
+            $modified = $true
+            Write-Host "Da vo hieu hoa Sandbox va Background Throttling thanh cong!" -ForegroundColor Green
         } else {
             Write-Host "Sandbox da duoc vo hieu hoa truoc do!" -ForegroundColor Green
         }
+    }
+
+    if ($modified) {
+        Set-Content -Path $utilsFile -Value $utilsContent
+    }
+}
+
+# 6.6 Strengthen loading overlay cleanup to avoid a stuck dark screen over the real UI
+$loadingOverlayFile = Join-Path $tempDir "dist\loadingOverlay.js"
+if ($false -and (Test-Path $loadingOverlayFile)) {
+    $loadingOverlayContent = Get-Content $loadingOverlayFile -Raw
+    if ($loadingOverlayContent -match "win\.webContents\.once\('did-finish-load'") {
+        Write-Host "Dang gia co loading overlay de tranh man hinh den..." -ForegroundColor Yellow
+        $oldOverlayBlock = @"
+    win.webContents.once('did-finish-load', () => {
+        try {
+            win.contentView.removeChildView(view);
+        }
+        catch (_) {
+            // In case window was closed quickly
+        }
+        win.off('resize', updateBounds);
+    });
+"@
+        $newOverlayBlock = @"
+    let cleanedUp = false;
+    const cleanup = () => {
+        if (cleanedUp) {
+            return;
+        }
+        cleanedUp = true;
+        try {
+            win.contentView.removeChildView(view);
+        }
+        catch (_) {
+            // In case window was closed quickly
+        }
+        clearTimeout(fallbackTimer);
+        win.webContents.removeListener('did-finish-load', cleanup);
+        win.webContents.removeListener('did-stop-loading', cleanup);
+        win.webContents.removeListener('dom-ready', cleanup);
+        win.off('resize', updateBounds);
+    };
+    win.webContents.once('did-finish-load', cleanup);
+    win.webContents.once('did-stop-loading', cleanup);
+    win.webContents.once('dom-ready', cleanup);
+    const fallbackTimer = setTimeout(cleanup, 8000);
+"@
+        $loadingOverlayContent = $loadingOverlayContent.Replace($oldOverlayBlock, $newOverlayBlock)
+        Set-Content -Path $loadingOverlayFile -Value $loadingOverlayContent
+        Write-Host "Da gia co loading overlay thanh cong!" -ForegroundColor Green
     }
 }
 
@@ -136,7 +198,7 @@ if (Test-Path $utilsFile) {
 Write-Host "Dang dong goi lai app.asar..." -ForegroundColor Yellow
 try {
     # Call npx directly
-    $null = npx -y @electron/asar pack $tempDir $asarFile
+    $null = npx -y @electron/asar pack $tempDir $asarFile --unpack-dir "node_modules/chrome-devtools-mcp"
     if ($LASTEXITCODE -ne 0) {
         throw "Loi khi dong goi lai tep asar."
     }

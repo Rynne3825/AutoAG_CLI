@@ -30,6 +30,11 @@
 | **Hoạt động ngầm** | ❌ Dừng hoạt động khi thu nhỏ hoặc mất tập trung |  **Hoạt động ngầm liên tục** ngay cả khi thu nhỏ |
 | **Độ tin cậy** | 🔄 Dễ lỗi nếu giao diện DOM thay đổi cấu trúc | 🛡️ **Kép (Dual-Layer)**: Giao thức mạng + Giao diện dự phòng |
 
+### 🚀 Bản Nâng Cấp Engine 2026 (Ultra Edition)
+* **Tương Thích Radix UI Toàn Diện**: Tự động nhận diện và mô phỏng chính xác các thao tác chọn trên cấu trúc tùy chọn phức tạp (như `role="radio"`, `role="checkbox"` của thư viện Radix UI) thông qua cơ chế dò ngược thẻ cha điều khiển (`resolveInteractiveTarget`).
+* **Cô Lập Vùng Quét An Toàn (Root Scope Selection)**: Tránh hoàn toàn việc nhận diện nhầm các đoạn hội thoại hoặc chữ trong lịch sử chat bằng cách chỉ quét các thẻ card/step chuẩn (`div[class*="card"]`, `div[class*="step"]`, `div[role="dialog"]`) và ưu tiên giữ khung bao gốc lớn nhất.
+* **Tốc Độ Xử Lý Chớp Nhoáng (Lightning Speed)**: Tần suất quét DOM phản hồi trong **10ms**, vòng lặp bấm nút sau mỗi **15ms**, và trễ đồng bộ chỉ **20ms**, giúp phê duyệt ngay lập tức khi vừa xuất hiện.
+
 ---
 
 ## 🗺️ Luồng Kiến Trúc (System Architecture)

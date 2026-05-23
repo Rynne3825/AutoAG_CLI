@@ -28,3 +28,10 @@ obj/
 *.user
 Thumbs.db
 Desktop.ini
+
+# AutoAG Runtime & Agent State Files
+.agents/
+.rtk/
+scratch/
+autosubmit_coverage.json
+preload.js

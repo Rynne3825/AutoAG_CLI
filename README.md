@@ -30,6 +30,11 @@
 | **Background execution** | ❌ Paused when minimized or unfocused |  **Runs continuously in background** even if minimized |
 | **Reliability** | 🔄 Prone to errors if the DOM structure changes | 🛡️ **Dual-Layer**: Network interception + DOM fallback |
 
+### 🚀 2026 Engine Upgrades (Ultra Edition)
+* **Radix UI Native Integration**: Seamlessly auto-selects custom component wrappers (like `role="radio"` or `role="checkbox"` controls in Radix UI) by automatically resolving interactive target nodes (`resolveInteractiveTarget`).
+* **Root Scope Isolation**: Completely avoids text collision with regular chat log history by restricting scans to actual container classes (`div[class*="card"]`, `div[class*="step"]`, `div[role="dialog"]`) and using Parent-Root scope selection.
+* **Blazing Fast Timings**: Upgraded to **10ms** MutationObserver scanning debounce, **15ms** button retry loops, and **20ms** click-to-submit state sync transitions, making foreground approvals completely imperceptible.
+
 ---
 
 ## 🗺️ System Architecture
