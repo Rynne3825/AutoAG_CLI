@@ -362,7 +362,7 @@
 
             writeQueue.push(...idsToProcess);
             processWriteQueue();
-        }, 1500); // Ghi file tối đa mỗi 1.5 giây một lần để chống nghẽn I/O
+        }, 50); // Ghi file siêu tốc sau 50ms để chia sẻ ngay lập tức
     }
 
     function processWriteQueue() {
@@ -901,7 +901,7 @@
         // Use setInterval polling instead of fs.watch to prevent Electron renderer native crashes
         setInterval(() => {
             loadConversationsFromCoverageFile();
-        }, 1000);
+        }, 100); // Tăng tần suất đọc file lên 100ms để bắt thay đổi tức thì
     }
 
     function captureStreamDetails(url, headers, bodyText) {
@@ -1789,8 +1789,8 @@
             subtree: true
         });
 
-        setInterval(tryAutoSubmit, 500);
-        setInterval(scanAndHookIframes, 1500); // Periodic fallback scan for iframes
+        setInterval(tryAutoSubmit, 100); // Quét dự phòng nhanh hơn mỗi 100ms
+        setInterval(scanAndHookIframes, 500); // Quét dự phòng iframe mỗi 500ms
         setInterval(loadSettingsAsync, 5000); // Async settings refresh
 
         // Periodic check to capture CSRF token if it wasn't ready at startup
@@ -1798,7 +1798,7 @@
             if (tryInitCsrfToken()) {
                 manageShadowStreams();
             }
-        }, 1500);
+        }, 300); // Quét lại token nhanh hơn mỗi 300ms
 
         setTimeout(tryAutoSubmit, 500);
         tryAutoSubmit();
